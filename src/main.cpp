@@ -1,10 +1,16 @@
 
 #include "lemlib/api.hpp" // IWYU pragma: keep
+#include "pros/adi.hpp"
+#include "pros/misc.h"
+#include "pros/misc.hpp"
 #include "main.h"
 // left motor group
-pros::MotorGroup left_motor_group({-1, 2, -3}, pros::MotorGears::blue);
+pros::MotorGroup left_motor_group({1, 2, 3}, pros::MotorGears::blue);
 // right motor group
-pros::MotorGroup right_motor_group({4, -5, 6}, pros::MotorGears::green);
+pros::MotorGroup right_motor_group({-4, -5, -6}, pros::MotorGears::blue);
+
+pros::Motor IntakeMotor(6);
+pros::adi::Pneumatics mySolenoid('B', false);
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
@@ -17,19 +23,15 @@ lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
 
 // imu
 pros::Imu imu(10);
-// horizontal tracking wheel encoder
-pros::Rotation horizontal_encoder(20);
 // vertical tracking wheel encoder
 pros::adi::Encoder vertical_encoder('C', 'D', true);
-// horizontal tracking wheel
-lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_encoder, lemlib::Omniwheel::NEW_275, -5.75);
 // vertical tracking wheel
 lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_275, -2.5);
 
 // odometry settings
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
                             nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
-                            &horizontal_tracking_wheel, // horizontal tracking wheel 1
+                            nullptr, // horizontal tracking wheel 1, set to nullptr as we dont' have a second one
                             nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
                             &imu // inertial sensor
 );
@@ -83,15 +85,49 @@ void initialize() {
 }
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
+
+/**
+ * Runs the operator control code. This function will be started in its own task
+ * with the default priority and stack size whenever the robot is enabled via
+ * the Field Management System or the VEX Competition Switch in the operator
+ * control mode.
+ *
+ * If no competition control is connected, this function will run immediately
+ * following initialize().
+ *
+ * If the robot is disabled or communications is lost, the
+ * operator control task will be stopped. Re-enabling the robot will restart the
+ * task, not resume it from where it left off.
+ */
+
 void opcontrol() {
     // loop forever
+    pros::Controller master(pros::E_CONTROLLER_MASTER);
+
+    bool flagState = false;
     while (true) {
         // get left y and right y positions
         int RightY = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
         int turn = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
 
         // move the robot
-        chassis.tank(RightY, turn);
+        chassis.arcade(RightY, turn);
+
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+            IntakeMotor.move(127);
+        }else {
+            IntakeMotor.move(0);
+        }
+
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)){
+            if(flagState == true) {
+                mySolenoid.extend();
+                flagState = false; 
+            }else {
+                mySolenoid.retract();
+                flagState = false;
+            }
+        }
 
         // delay to save resources
         pros::delay(25);
@@ -112,15 +148,6 @@ void on_center_button() {
 		pros::lcd::clear_line(2);
 	}
 }
-
-/**
- * Runs initialization code. This occurs as soon as the program is started.
- *
- * All other competition modes are blocked by initialize; it is recommended
- * to keep execution time for this mode under a few seconds.
- */
-
-
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -152,17 +179,3 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {}
-
-/**
- * Runs the operator control code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the operator
- * control mode.
- *
- * If no competition control is connected, this function will run immediately
- * following initialize().
- *
- * If the robot is disabled or communications is lost, the
- * operator control task will be stopped. Re-enabling the robot will restart the
- * task, not resume it from where it left off.
- */
