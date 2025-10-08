@@ -4,15 +4,15 @@
 #include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "main.h"
-// left motor group
+
+
+// TODO: Check motor ports and gear catridges https://www.vexrobotics.com/276-4840.html
 pros::MotorGroup left_motor_group({1, 2, 3}, pros::MotorGears::blue);
-// right motor group
 pros::MotorGroup right_motor_group({-4, -5, -6}, pros::MotorGears::blue);
 
 pros::Motor IntakeMotor(6);
 pros::adi::Pneumatics mySolenoid('B', false);
 
-// drivetrain settings
 lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
                               &right_motor_group, // right motor group
                               10, // 10 inch track width
@@ -25,6 +25,7 @@ lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
 pros::Imu imu(10);
 // vertical tracking wheel encoder
 pros::adi::Encoder vertical_encoder('C', 'D', true);
+
 // vertical tracking wheel
 lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_275, -2.5);
 
@@ -83,7 +84,7 @@ void initialize() {
         }
     });
 }
-pros::Controller controller(pros::E_CONTROLLER_MASTER);
+
 
 
 /**
@@ -106,9 +107,10 @@ void opcontrol() {
 
     bool flagState = false;
     while (true) {
+
         // get left y and right y positions
-        int RightY = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
-        int turn = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
+        int RightY = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
+        int turn = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
 
         // move the robot
         chassis.arcade(RightY, turn);
