@@ -3,31 +3,32 @@
 #include "pros/adi.hpp"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
+#include "pros/rotation.hpp"
 #include "main.h"
 
 
 // TODO: Check motor ports and gear catridges https://www.vexrobotics.com/276-4840.html
-pros::MotorGroup left_motor_group({1, 2, 3}, pros::MotorGears::blue);
-pros::MotorGroup right_motor_group({-4, -5, -6}, pros::MotorGears::blue);
+pros::MotorGroup left_motor_group({11, 12, 13}, pros::MotorGears::blue);
+pros::MotorGroup right_motor_group({-18, -19, -20}, pros::MotorGears::blue);
 
-pros::Motor IntakeMotor(6);
+pros::Motor IntakeMotor(7);
 pros::adi::Pneumatics mySolenoid('B', false);
 
 lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
                               &right_motor_group, // right motor group
-                              10, // 10 inch track width
+                              10.75, // 10 inch track width
                               lemlib::Omniwheel::NEW_4, // using new 4" omnis
-                              360, // drivetrain rpm is 360
+                              450, // drivetrain rpm is 360
                               2 // horizontal drift is 2 (for now)
 );
 
 // imu
 pros::Imu imu(10);
 // vertical tracking wheel encoder
-pros::adi::Encoder vertical_encoder('C', 'D', true);
+pros::Rotation verticalOdom(9);
 
 // vertical tracking wheel
-lemlib::TrackingWheel vertical_tracking_wheel(&vertical_encoder, lemlib::Omniwheel::NEW_275, -2.5);
+lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, -2.5);
 
 // odometry settings
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
@@ -109,11 +110,11 @@ void opcontrol() {
     while (true) {
 
         // get left y and right y positions
-        int RightY = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
-        int turn = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
+        int forward = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int heading = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
-        chassis.arcade(RightY, turn);
+        chassis.arcade(forward, heading);
 
         if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
             IntakeMotor.move(127);
@@ -122,9 +123,9 @@ void opcontrol() {
         }
 
         if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)){
-            if(flagState == true) {
+            if(flagState == false) {
                 mySolenoid.extend();
-                flagState = false; 
+                flagState = true; 
             }else {
                 mySolenoid.retract();
                 flagState = false;
