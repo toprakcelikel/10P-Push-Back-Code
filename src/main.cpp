@@ -1,6 +1,11 @@
-
+#include "lemlib/api.hpp" // IWYU pragma: keep
+#include "lemlib/chassis/chassis.hpp"
 #include "main.h"
 
+pros::MotorGroup left_motors({12, 11}, pros::MotorGearset::green); // left motors on ports 12, 11
+pros::MotorGroup right_motors({-20, -19}, pros::MotorGearset::green); // right motors on ports 20, 19
+
+lemlib::Drivetrain driveTrain(&left_motors, &right_motors);
 
 // initialize function. Runs on program startup
 void initialize() {
