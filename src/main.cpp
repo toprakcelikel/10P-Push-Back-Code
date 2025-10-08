@@ -1,8 +1,6 @@
 
-#include "mecanum_drive.h"
 #include "main.h"
 
-MecanumDriveTrain driveTrain;
 
 // initialize function. Runs on program startup
 void initialize() {
@@ -11,10 +9,6 @@ void initialize() {
     // print position to brain screen
     pros::Task screen_task([&]() {
         while (true) {
-            pros::lcd::print(1, "frontLeftVelocity: %.3f", driveTrain.frontLeftVelocity); 
-            pros::lcd::print(3, "backLeftVelocity: %.3f", driveTrain.backLeftVelocity); 
-            pros::lcd::print(5, "frontRightVelocity: %.3f", driveTrain.frontRightVelocity); 
-            pros::lcd::print(7, "backRightVelocity: %.3f", driveTrain.backRightVelocity); 
             
             // delay to save resources
             pros::delay(20);
@@ -36,7 +30,6 @@ void opcontrol() {
         double a3 = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         double a1 = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         double a4 = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
-        driveTrain.arcadeDrive(a3, a1, a4);
 
         // delay to save resources
         pros::delay(25);
