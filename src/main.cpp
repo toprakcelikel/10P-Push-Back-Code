@@ -1,4 +1,3 @@
-
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/adi.hpp"
 #include "pros/misc.h"
@@ -110,8 +109,8 @@ void opcontrol() {
     while (true) {
 
         // get left y and right y positions
-        int forward = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int heading = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        int forward = -master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int heading = -master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
         chassis.arcade(forward, heading);
