@@ -7,8 +7,8 @@
 
 
 // TODO: Check motor ports and gear catridges https://www.vexrobotics.com/276-4840.html
-pros::MotorGroup left_motor_group({11, 12, 13}, pros::MotorGears::blue);
-pros::MotorGroup right_motor_group({-18, -19, -20}, pros::MotorGears::blue);
+pros::MotorGroup left_motor_group({-11, -12, -13}, pros::MotorGears::blue);
+pros::MotorGroup right_motor_group({18, 19, 20}, pros::MotorGears::blue);
 
 pros::Motor IntakeMotor(7);
 pros::adi::Pneumatics mySolenoid('B', false);
@@ -102,6 +102,7 @@ void initialize() {
  */
 
 void opcontrol() {
+    autonomous();
     // loop forever
     pros::Controller master(pros::E_CONTROLLER_MASTER);
 
@@ -109,8 +110,8 @@ void opcontrol() {
     while (true) {
 
         // get left y and right y positions
-        int forward = -master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int heading = -master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        int forward = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int heading = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
         chassis.arcade(forward, heading);
@@ -180,4 +181,25 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+    int i = 0;
+    while(true){
+        pros::adi::Motor rightFront(20);
+        pros::adi::Motor rightMiddle(19);
+        pros::adi::Motor rightBack(18);
+        pros::adi::Motor leftFront(13);
+        pros::adi::Motor leftMiddle(12);
+        pros::adi::Motor leftBack(11);
+        
+        rightFront.set_value(i);
+        rightMiddle.set_value(i);
+        rightBack.set_value(i);
+        leftFront.set_value(i);
+        leftMiddle.set_value(i);
+        leftBack.set_value(i);
+        i++;
+    }
+    chassis.setPose(0,0,0);
+    chassis.moveToPoint(0, 15, 10000);
+}
+
