@@ -110,8 +110,8 @@ void opcontrol() {
     while (true) {
 
         // get left y and right y positions
-        int forward = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int heading = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int heading = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
         chassis.arcade(forward, heading);
