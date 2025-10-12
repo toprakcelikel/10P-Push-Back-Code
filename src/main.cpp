@@ -1,4 +1,3 @@
-
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/adi.hpp"
 #include "pros/misc.h"
