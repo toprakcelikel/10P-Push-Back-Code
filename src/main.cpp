@@ -28,7 +28,7 @@ pros::Imu imu(10);
 pros::Rotation verticalOdom(8);
 
 // vertical tracking wheel
-lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, -2.5);
+lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, -2.25);
 
 // odometry settings
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
@@ -195,22 +195,6 @@ void competition_initialize() {}
  */
 void autonomous() {
     int i = 0;
-    while(true){
-        pros::adi::Motor rightFront(20);
-        pros::adi::Motor rightMiddle(19);
-        pros::adi::Motor rightBack(18);
-        pros::adi::Motor leftFront(13);
-        pros::adi::Motor leftMiddle(12);
-        pros::adi::Motor leftBack(11);
-        
-        rightFront.set_value(i);
-        rightMiddle.set_value(i);
-        rightBack.set_value(i);
-        leftFront.set_value(i);
-        leftMiddle.set_value(i);
-        leftBack.set_value(i);
-        i++;
-    }
     chassis.setPose(0,0,0);
     chassis.moveToPoint(0, 15, 10000);
 }
