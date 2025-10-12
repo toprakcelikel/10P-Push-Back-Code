@@ -7,11 +7,11 @@
 
 
 // TODO: Check motor ports and gear catridges https://www.vexrobotics.com/276-4840.html
-pros::MotorGroup left_motor_group({-11, -12, -13}, pros::MotorGears::blue);
-pros::MotorGroup right_motor_group({18, 19, 20}, pros::MotorGears::blue);
+pros::MotorGroup left_motor_group({18, 19, 20}, pros::MotorGears::blue);
+pros::MotorGroup right_motor_group({-11, -12, -13}, pros::MotorGears::blue);
 
-pros::Motor IntakeMotor(7);
-pros::adi::Pneumatics mySolenoid('B', false);
+pros::Motor IntakeMotor(1);
+pros::adi::Pneumatics mySolenoid('A', false);
 
 lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
                               &right_motor_group, // right motor group
@@ -24,7 +24,7 @@ lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
 // imu
 pros::Imu imu(10);
 // vertical tracking wheel encoder
-pros::Rotation verticalOdom(9);
+pros::Rotation verticalOdom(8);
 
 // vertical tracking wheel
 lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, -2.5);
@@ -59,6 +59,17 @@ lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               3, // large error range, in degrees
                                               500, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
+);
+
+lemlib::ExpoDriveCurve throttleCurve(3, // joystick deadband out of 127
+                                     10, // minimum output where drivetrain will move out of 127
+                                     1.019 // expo curve gain
+);
+
+// input curve for steer input during driver control
+lemlib::ExpoDriveCurve steerCurve(3, // joystick deadband out of 127
+                                  10, // minimum output where drivetrain will move out of 127
+                                  1.019 // expo curve gain
 );
 
 // create the chassis
@@ -202,4 +213,3 @@ void autonomous() {
     chassis.setPose(0,0,0);
     chassis.moveToPoint(0, 15, 10000);
 }
-
