@@ -1,16 +1,19 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
+#include "liblvgl/llemu.hpp"
 #include "pros/adi.hpp"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "pros/rotation.hpp"
+#include <cstdio>
 #include "main.h"
 
 
 // TODO: Check motor ports and gear catridges https://www.vexrobotics.com/276-4840.html
-pros::MotorGroup left_motor_group({18, 19, 20}, pros::MotorGears::blue);
-pros::MotorGroup right_motor_group({-11, -12, -13}, pros::MotorGears::blue);
+pros::MotorGroup left_motor_group({11, 12, 13}, pros::MotorGears::blue);
+pros::MotorGroup right_motor_group({-18, -17, -20}, pros::MotorGears::blue);
 
 pros::Motor IntakeMotor(1);
+pros::Motor higherIntakeMotor(14);
 pros::adi::Pneumatics mySolenoid('A', false);
 
 lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
@@ -38,38 +41,38 @@ lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
+lemlib::ControllerSettings lateral_controller(1, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              3, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+                                              10, // derivative gain (kD)
+                                              0, // anti windup
+                                              0, // small error range, in inches
+                                              0, // small error range timeout, in milliseconds
+                                              0, // large error range, in inches
+                                              0, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(1, // proportional gain (kP)
                                               0, // integral gain (kI)
                                               10, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in degrees
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in degrees
-                                              500, // large error range timeout, in milliseconds
+                                              0, // anti windup
+                                              0, // small error range, in degrees
+                                              0, // small error range timeout, in milliseconds
+                                              0, // large error range, in degrees
+                                              0, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 
 lemlib::ExpoDriveCurve throttleCurve(3, // joystick deadband out of 127
                                      10, // minimum output where drivetrain will move out of 127
-                                     1.019 // expo curve gain
+                                     1.4 // expo curve gain
 );
 
 // input curve for steer input during driver control
 lemlib::ExpoDriveCurve steerCurve(3, // joystick deadband out of 127
                                   10, // minimum output where drivetrain will move out of 127
-                                  1.019 // expo curve gain
+                                  1.4 // expo curve gain
 );
 
 // create the chassis
@@ -82,6 +85,8 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
 // initialize function. Runs on program startup
 void initialize() {
     pros::lcd::initialize(); // initialize brain screen
+    pros::lcd::print(0, "Rotation angle: %f", verticalOdom.get_position());
+    pros::delay(2000);
     chassis.calibrate(); // calibrate sensors
     // print position to brain screen
     pros::Task screen_task([&]() {
@@ -90,6 +95,7 @@ void initialize() {
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+            pros::lcd::print(3, "IMU heading: %f", imu.get_heading());
             // delay to save resources
             pros::delay(20);
         }
@@ -122,8 +128,10 @@ void opcontrol() {
 
         // get left y and right y positions
         int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int heading = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-
+        int heading = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        if(forward < 10){
+            heading /= 2;
+        }
         // move the robot
         chassis.arcade(forward, heading);
 
@@ -133,7 +141,28 @@ void opcontrol() {
             IntakeMotor.move(0);
         }
 
-        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)){
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+            IntakeMotor.move(-127);
+        }else {
+            IntakeMotor.move(0);
+        }
+
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
+            higherIntakeMotor.move(127);
+        }else {
+            higherIntakeMotor.move(0);
+        }
+
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
+            higherIntakeMotor.move(-127);
+        }else {
+            higherIntakeMotor.move(0);
+        }
+
+
+
+
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
             if(flagState == false) {
                 mySolenoid.extend();
                 flagState = true; 
@@ -144,6 +173,7 @@ void opcontrol() {
         }
 
         // delay to save resources
+        pros::lcd::clear();
         pros::delay(25);
     }
 }
@@ -195,5 +225,8 @@ void competition_initialize() {}
 void autonomous() {
     int i = 0;
     chassis.setPose(0,0,0);
-    chassis.moveToPoint(0, 15, 10000);
+    chassis.moveToPoint(0, 25, 1500);
+    float y = chassis.getPose().y;
+    std::cout << y << std::endl;
+
 }
