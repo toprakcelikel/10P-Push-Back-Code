@@ -14,6 +14,7 @@ pros::MotorGroup right_motor_group({-18, -17, -20}, pros::MotorGears::blue);
 
 pros::Motor IntakeMotor(1);
 pros::Motor higherIntakeMotor(14);
+pros::Motor midIntakeMotor(15);
 pros::adi::Pneumatics mySolenoid('A', false);
 
 lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
@@ -27,7 +28,7 @@ lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
 // imu
 pros::Imu imu(10);
 // vertical tracking wheel encoder
-pros::Rotation verticalOdom(8);
+pros::Rotation verticalOdom(-8);
 
 // vertical tracking wheel
 lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, -2.25);
@@ -126,7 +127,7 @@ void opcontrol() {
     bool flagState = false;
     while (true) {
 
-        // get left y and right y positions
+        // get left y and right y 3
         int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int heading = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         if(forward < 10){
@@ -137,14 +138,18 @@ void opcontrol() {
 
         if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
             IntakeMotor.move(127);
+            midIntakeMotor.move(127);
         }else {
-            IntakeMotor.move(0);
+            IntakeMotor.move(0); 
+             midIntakeMotor.move(0);
         }
 
         if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
             IntakeMotor.move(-127);
+            midIntakeMotor.move(-127);
         }else {
             IntakeMotor.move(0);
+             midIntakeMotor.move(0);
         }
 
         if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
@@ -223,10 +228,10 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-    int i = 0;
-    chassis.setPose(0,0,0);
-    chassis.moveToPoint(0, 25, 1500);
-    float y = chassis.getPose().y;
-    std::cout << y << std::endl;
+    //int i = 0;
+    //chassis.setPose(0,0,0);
+    //chassis.moveToPoint(0, 25, 1500);
+    //float y = chassis.getPose().y;
+    //std::cout << y << std::endl;
 
 }
