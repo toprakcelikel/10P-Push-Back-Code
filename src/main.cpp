@@ -13,8 +13,8 @@ pros::MotorGroup left_motor_group({11, 12, 13}, pros::MotorGears::blue);
 pros::MotorGroup right_motor_group({-18, -17, -20}, pros::MotorGears::blue);
 
 pros::Motor IntakeMotor(1);
-pros::Motor higherIntakeMotor(14);
-pros::Motor midIntakeMotor(15);
+pros::Motor higherIntakeMotor(15);
+pros::Motor midIntakeMotor(14);
 pros::adi::Pneumatics mySolenoid('A', false);
 
 lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
@@ -31,7 +31,7 @@ pros::Imu imu(10);
 pros::Rotation verticalOdom(-8);
 
 // vertical tracking wheel
-lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, -2.25);
+lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, 3.8);
 
 // odometry settings
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
@@ -44,7 +44,7 @@ lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel
 // lateral PID controller
 lemlib::ControllerSettings lateral_controller(1, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              10, // derivative gain (kD)
+                                              6, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in inches
                                               0, // small error range timeout, in milliseconds
@@ -56,7 +56,7 @@ lemlib::ControllerSettings lateral_controller(1, // proportional gain (kP)
 // angular PID controller
 lemlib::ControllerSettings angular_controller(1, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              10, // derivative gain (kD)
+                                              6, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in degrees
                                               0, // small error range timeout, in milliseconds
@@ -80,27 +80,31 @@ lemlib::ExpoDriveCurve steerCurve(3, // joystick deadband out of 127
 lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         lateral_controller, // lateral PID settings
                         angular_controller, // angular PID settings
-                        sensors // odometry sensors
+                        sensors, // odometry sensors
+                        &throttleCurve,
+                        &steerCurve
 );
+
+void telemetry(){
+    while (true) {
+        // print robot location to the brain screen
+        pros::delay(500);
+        pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
+        pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
+        pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+        pros::lcd::print(3, "IMU heading: %f", imu.get_heading());
+        // delay to save resources
+        pros::delay(20);
+    }
+}
 
 // initialize function. Runs on program startup
 void initialize() {
     pros::lcd::initialize(); // initialize brain screen
-    pros::lcd::print(0, "Rotation angle: %f", verticalOdom.get_position());
-    pros::delay(2000);
+    pros::delay(500);
     chassis.calibrate(); // calibrate sensors
     // print position to brain screen
-    pros::Task screen_task([&]() {
-        while (true) {
-            // print robot location to the brain screen
-            pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-            pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-            pros::lcd::print(3, "IMU heading: %f", imu.get_heading());
-            // delay to save resources
-            pros::delay(20);
-        }
-    });
+    pros::Task screen_task(telemetry);
 }
 
 
@@ -119,69 +123,7 @@ void initialize() {
  * task, not resume it from where it left off.
  */
 
-void opcontrol() {
-    autonomous();
-    // loop forever
-    pros::Controller master(pros::E_CONTROLLER_MASTER);
 
-    bool flagState = false;
-    while (true) {
-
-        // get left y and right y 3
-        int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int heading = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-        if(forward < 10){
-            heading /= 2;
-        }
-        // move the robot
-        chassis.arcade(forward, heading);
-
-        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
-            IntakeMotor.move(127);
-            midIntakeMotor.move(127);
-        }else {
-            IntakeMotor.move(0); 
-             midIntakeMotor.move(0);
-        }
-
-        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
-            IntakeMotor.move(-127);
-            midIntakeMotor.move(-127);
-        }else {
-            IntakeMotor.move(0);
-             midIntakeMotor.move(0);
-        }
-
-        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
-            higherIntakeMotor.move(127);
-        }else {
-            higherIntakeMotor.move(0);
-        }
-
-        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
-            higherIntakeMotor.move(-127);
-        }else {
-            higherIntakeMotor.move(0);
-        }
-
-
-
-
-        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
-            if(flagState == false) {
-                mySolenoid.extend();
-                flagState = true; 
-            }else {
-                mySolenoid.retract();
-                flagState = false;
-            }
-        }
-
-        // delay to save resources
-        pros::lcd::clear();
-        pros::delay(25);
-    }
-}
 /**
  * A callback function for LLEMU's center button.
  *
@@ -228,10 +170,61 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-    //int i = 0;
-    //chassis.setPose(0,0,0);
-    //chassis.moveToPoint(0, 25, 1500);
-    //float y = chassis.getPose().y;
-    //std::cout << y << std::endl;
+    int i = 0;
+    chassis.setPose(0,0,0);
+    // chassis.moveToPoint(0, 25, 1500);
+    // float y = chassis.getPose().y;
+    // std::cout << y << std::endl;
+}
 
+void opcontrol() {
+    //autonomous();
+    // loop forever
+    pros::Controller master(pros::E_CONTROLLER_MASTER);
+
+    bool flagState = false;
+    while (true) {
+
+        // get left y and right y 3
+        int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int heading = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        // move the robot
+        chassis.arcade(forward, heading);
+
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+            IntakeMotor.move(127);
+            midIntakeMotor.move(127);
+        }
+        else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+            IntakeMotor.move(-127);
+            midIntakeMotor.move(-127);
+        }
+        else {
+            IntakeMotor.move(0); 
+            midIntakeMotor.move(0);
+        }
+
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
+            higherIntakeMotor.move(127);
+        }
+        else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
+            higherIntakeMotor.move(-127);
+        }
+        else {
+            higherIntakeMotor.move(0);
+        }
+
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
+            if(flagState == false) {
+                mySolenoid.extend();
+                flagState = true; 
+            }else {
+                mySolenoid.retract();
+                flagState = false;
+            }
+        }
+
+        // delay to save resources
+        pros::delay(10);
+    }
 }
