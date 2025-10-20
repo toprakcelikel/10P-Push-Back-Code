@@ -42,9 +42,9 @@ lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(1, // proportional gain (kP)
+lemlib::ControllerSettings lateral_controller(9, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              6, // derivative gain (kD)
+                                              67, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in inches
                                               0, // small error range timeout, in milliseconds
@@ -54,26 +54,28 @@ lemlib::ControllerSettings lateral_controller(1, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(1, // proportional gain (kP)
-                                              0, // integral gain (kI)
-                                              6, // derivative gain (kD)
-                                              0, // anti windup
-                                              0, // small error range, in degrees
-                                              0, // small error range timeout, in milliseconds
-                                              0, // large error range, in degrees
-                                              0, // large error range timeout, in milliseconds
-                                              0 // maximum acceleration (slew)
+lemlib::ControllerSettings angular_controller(
+    3,    // kP
+    0,    // kI
+    9,    // kD
+    0,    // anti windup
+    1,    // small error range (degrees)
+    250,  // small error timeout (ms)
+    3,    // large error range (degrees)
+    1000, // large error timeout (ms)
+    0     // max acceleration (slew)
 );
+
 
 lemlib::ExpoDriveCurve throttleCurve(3, // joystick deadband out of 127
                                      10, // minimum output where drivetrain will move out of 127
-                                     1.4 // expo curve gain
+                                     1.3 // expo curve gain
 );
 
 // input curve for steer input during driver control
 lemlib::ExpoDriveCurve steerCurve(3, // joystick deadband out of 127
                                   10, // minimum output where drivetrain will move out of 127
-                                  1.4 // expo curve gain
+                                  1.3 // expo curve gain
 );
 
 // create the chassis
@@ -170,12 +172,19 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-    int i = 0;
-    chassis.setPose(0,0,0);
-    // chassis.moveToPoint(0, 25, 1500);
-    // float y = chassis.getPose().y;
-    // std::cout << y << std::endl;
+    imu.reset();
+    while (imu.is_calibrating()) {
+        pros::delay(20);
+    }
+    chassis.setPose(0, 0, 0);
+
+    chassis.turnToHeading(90, 4000); 
+    
+    pros::delay(3000);
 }
+
+
+
 
 void opcontrol() {
     //autonomous();
@@ -187,7 +196,8 @@ void opcontrol() {
 
         // get left y and right y 3
         int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int heading = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        double heading = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+
         // move the robot
         chassis.arcade(forward, heading);
 
