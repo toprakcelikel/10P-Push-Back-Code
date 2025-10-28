@@ -1,13 +1,21 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "liblvgl/llemu.hpp"
 #include "pros/adi.hpp"
+#include "pros/llemu.hpp"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "pros/rotation.hpp"
 #include <cstdio>
 #include "main.h"
 
+class InvertedIMU : public pros::Imu {
+public:
+    using pros::Imu::Imu;
+    double get_heading() {
+        return 360 - pros::Imu::get_heading();
 
+    }
+};
 // TODO: Check motor ports and gear catridges https://www.vexrobotics.com/276-4840.html
 pros::MotorGroup left_motor_group({11, 12, 13}, pros::MotorGears::blue);
 pros::MotorGroup right_motor_group({-18, -17, -20}, pros::MotorGears::blue);
@@ -26,12 +34,14 @@ lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
 );
 
 // imu
-pros::Imu imu(10);
+InvertedIMU imu(10);
+
+
 // vertical tracking wheel encoder
-pros::Rotation verticalOdom(-8);
+pros::Rotation verticalOdom(8);
 
 // vertical tracking wheel
-lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, 3.8);
+lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, 3.8, true);
 
 // odometry settings
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
@@ -42,9 +52,9 @@ lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(9, // proportional gain (kP)
-                                              0, // integral gain (kI)
-                                              67, // derivative gain (kD)
+lemlib::ControllerSettings lateral_controller(9, // proportional gain (kP) 9
+                                              0, // integral gain (kI) 0
+                                              67, // derivative gain (kD) 67
                                               0, // anti windup
                                               0, // small error range, in inches
                                               0, // small error range timeout, in milliseconds
@@ -55,9 +65,9 @@ lemlib::ControllerSettings lateral_controller(9, // proportional gain (kP)
 
 // angular PID controller
 lemlib::ControllerSettings angular_controller(
-    2,    // kP
+    0.25,    // kP
     0,    // kI
-400,    // kD
+    4,    // kD
     0,    // anti windup
     0,    // small error range (degrees)
     0,  // small error timeout (ms)
@@ -69,13 +79,13 @@ lemlib::ControllerSettings angular_controller(
 
 lemlib::ExpoDriveCurve throttleCurve(3, // joystick deadband out of 127
                                      10, // minimum output where drivetrain will move out of 127
-                                     1.3 // expo curve gain
+                                     1.2 // expo curve gain
 );
 
 // input curve for steer input during driver control
 lemlib::ExpoDriveCurve steerCurve(3, // joystick deadband out of 127
                                   10, // minimum output where drivetrain will move out of 127
-                                  1.3 // expo curve gain
+                                  1.2 // expo curve gain
 );
 
 // create the chassis
@@ -174,7 +184,10 @@ void competition_initialize() {}
 void autonomous() {
     int i = 0;
     chassis.setPose(0,0,0);
-    chassis.turnToHeading(10, 40000, {.maxSpeed=25}, true);
+    chassis.turnToHeading(90, 3000);
+
+    pros::lcd::print(5, "heading turning: %f", chassis.getPose().theta);
+
 }
 
 
@@ -190,16 +203,17 @@ void opcontrol() {
 
         // get left y and right y 3
         int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        double heading = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        int heading = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
         chassis.arcade(forward, heading);
 
         if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+
             IntakeMotor.move(127);
             midIntakeMotor.move(127);
         }
-        else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+        else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
             IntakeMotor.move(-127);
             midIntakeMotor.move(-127);
         }
@@ -208,7 +222,7 @@ void opcontrol() {
             midIntakeMotor.move(0);
         }
 
-        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
             higherIntakeMotor.move(127);
         }
         else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
