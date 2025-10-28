@@ -55,14 +55,14 @@ lemlib::ControllerSettings lateral_controller(9, // proportional gain (kP)
 
 // angular PID controller
 lemlib::ControllerSettings angular_controller(
-    3,    // kP
+    2,    // kP
     0,    // kI
-    9,    // kD
+400,    // kD
     0,    // anti windup
-    1,    // small error range (degrees)
-    250,  // small error timeout (ms)
-    3,    // large error range (degrees)
-    1000, // large error timeout (ms)
+    0,    // small error range (degrees)
+    0,  // small error timeout (ms)
+    0,    // large error range (degrees)
+    0, // large error timeout (ms)
     0     // max acceleration (slew)
 );
 
@@ -172,15 +172,9 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-    imu.reset();
-    while (imu.is_calibrating()) {
-        pros::delay(20);
-    }
-    chassis.setPose(0, 0, 0);
-
-    chassis.turnToHeading(90, 4000); 
-    
-    pros::delay(3000);
+    int i = 0;
+    chassis.setPose(0,0,0);
+    chassis.turnToHeading(10, 40000, {.maxSpeed=25}, true);
 }
 
 
