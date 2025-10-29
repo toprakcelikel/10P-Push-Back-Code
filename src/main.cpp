@@ -6,19 +6,11 @@
 #include "pros/misc.hpp"
 #include "pros/rotation.hpp"
 #include <cstdio>
-#include "main.h"
+#include "main.h"  
 
-class InvertedIMU : public pros::Imu {
-public:
-    using pros::Imu::Imu;
-    double get_heading() {
-        return 360 - pros::Imu::get_heading();
-
-    }
-};
 // TODO: Check motor ports and gear catridges https://www.vexrobotics.com/276-4840.html
-pros::MotorGroup left_motor_group({11, 12, 13}, pros::MotorGears::blue);
-pros::MotorGroup right_motor_group({-18, -17, -20}, pros::MotorGears::blue);
+pros::MotorGroup left_motor_group({-11, -12, -13}, pros::MotorGears::blue);
+pros::MotorGroup right_motor_group({+18, +17, +20}, pros::MotorGears::blue);
 
 pros::Motor IntakeMotor(1);
 pros::Motor higherIntakeMotor(15);
@@ -34,7 +26,7 @@ lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
 );
 
 // imu
-InvertedIMU imu(10);
+pros::IMU imu(10);
 
 
 // vertical tracking wheel encoder
@@ -55,24 +47,24 @@ lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel
 lemlib::ControllerSettings lateral_controller(9, // proportional gain (kP) 9
                                               0, // integral gain (kI) 0
                                               67, // derivative gain (kD) 67
-                                              0, // anti windup
-                                              0, // small error range, in inches
-                                              0, // small error range timeout, in milliseconds
-                                              0, // large error range, in inches
-                                              0, // large error range timeout, in milliseconds
-                                              0 // maximum acceleration (slew)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              20 // maximum acceleration (slew)
 );
 
 // angular PID controller
 lemlib::ControllerSettings angular_controller(
-    0.25,    // kP
+    3.2,    // kP
     0,    // kI
-    4,    // kD
-    0,    // anti windup
-    0,    // small error range (degrees)
-    0,  // small error timeout (ms)
-    0,    // large error range (degrees)
-    0, // large error timeout (ms)
+    30,    // kD
+    3,    // anti windup
+    1,    // small error range (degrees)
+    100,  // small error timeout (ms)
+    3,    // large error range (degrees)
+    500, // large error timeout (ms)
     0     // max acceleration (slew)
 );
 
@@ -185,6 +177,8 @@ void autonomous() {
     int i = 0;
     chassis.setPose(0,0,0);
     chassis.turnToHeading(90, 3000);
+    chassis.turnToHeading(0, 3000);
+    chassis.turnToHeading(90, 3000);
 
     pros::lcd::print(5, "heading turning: %f", chassis.getPose().theta);
 
@@ -202,8 +196,8 @@ void opcontrol() {
     while (true) {
 
         // get left y and right y 3
-        int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int heading = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        int forward = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int heading = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
         chassis.arcade(forward, heading);
