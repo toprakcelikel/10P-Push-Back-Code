@@ -4,20 +4,23 @@
 #include "pros/llemu.hpp"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
+#include "pros/rotation.h"
 #include "pros/rotation.hpp"
+#include "pros/rtos.hpp"
 #include <cstdio>
 #include "main.h"  
 
 // TODO: Check motor ports and gear catridges https://www.vexrobotics.com/276-4840.html
-pros::MotorGroup left_motor_group({-11, -12, -13}, pros::MotorGears::blue);
-pros::MotorGroup right_motor_group({+18, +17, +20}, pros::MotorGears::blue);
+pros::MotorGroup right_motor_group({11, 12, 13}, pros::MotorGears::blue);
+pros::MotorGroup left_motor_group({-18, -17, -20}, pros::MotorGears::blue);
 
 pros::Motor IntakeMotor(1);
 pros::Motor higherIntakeMotor(15);
 pros::Motor midIntakeMotor(14);
-pros::adi::Pneumatics mySolenoid('A', false);
+pros::adi::Pneumatics mySolenoid('H', false);
 
-lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
+lemlib::Drivetrain drivetrain(// left motor group
+                              &left_motor_group,
                               &right_motor_group, // right motor group
                               10.75, // 10 inch track width
                               lemlib::Omniwheel::NEW_4, // using new 4" omnis
@@ -30,7 +33,9 @@ pros::IMU imu(10);
 
 
 // vertical tracking wheel encoder
-pros::Rotation verticalOdom(8);
+pros::Rotation verticalOdom(-8);
+
+
 
 // vertical tracking wheel
 lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, 3.8, true);
@@ -162,6 +167,26 @@ void disabled() {}
  */
 void competition_initialize() {}
 
+void intake(){
+    IntakeMotor.move(127);
+    midIntakeMotor.move(127);
+}
+
+void putBottom(){
+    IntakeMotor.move(-127);
+    midIntakeMotor.move(-127);
+}
+
+void putHigh(){
+    higherIntakeMotor.move(127);
+}
+
+void stopAll(){
+    higherIntakeMotor.move(0);
+    midIntakeMotor.move(0);
+    IntakeMotor.move(0);
+}
+
 /**
  * Runs the user autonomous code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -174,11 +199,48 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
+    chassis.setPose(+7.592, -53.9, 0);
+
+    chassis.turnToPoint(+18, -28.6, 1000, {.maxSpeed=40, .minSpeed=30});
+    intake();
+    mySolenoid.extend();
+    chassis.moveToPoint(+18, -28.6, 1000, {.maxSpeed=40, .minSpeed=30});
+    pros::delay(2000);
+    stopAll();
+    
+    chassis.turnToPoint(3.5, -11.5, 1000, {.maxSpeed = 70, .minSpeed=30});
+    chassis.moveToPoint(3.5, -11.5, 1000, {.maxSpeed=70, .minSpeed=30});
+    // putBottom();
+    //pros::delay(400);
+    //stopAll();
+
+    // chassis.turnToPoint(-47.3, -45.6, 1000, {.maxSpeed=70, .minSpeed=30});
+    // chassis.moveToPoint(-47.3, -45.6, 1000, {.maxSpeed=70, .minSpeed=30});
+
+
+    // chassis.turnToPoint(-47.0, -61.4, 1000, {.maxSpeed=70, .minSpeed=30});
+    //intake();
+    // chassis.moveToPoint(-47.0, -61.4, 1000, {.maxSpeed=70, .minSpeed=30});
+    //pros::delay(500);
+    //stopAll();
+
+    // chassis.turnToPoint(-48.3, -29.2, 1000, {.maxSpeed=70, .minSpeed=30});
+    // chassis.moveToPoint(-48.3, -29.2, 1000, {.maxSpeed=70, .minSpeed=30});
+    // putHigh();
+    // pros::delay(500);
+    // stopAll();
+
+
+    
+   
+
+
     int i = 0;
-    chassis.setPose(0,0,0);
-    chassis.turnToHeading(90, 3000);
-    chassis.turnToHeading(0, 3000);
-    chassis.turnToHeading(90, 3000);
+    // chassis.setPose(0,0,0);
+    // chassis.turnToHeading(90, 3000, {.maxSpeed=50});
+    // chassis.turnToHeading(0, 3000);
+    // chassis.moveToPoint(0, 20, 5000);
+
 
     pros::lcd::print(5, "heading turning: %f", chassis.getPose().theta);
 
@@ -193,38 +255,42 @@ void opcontrol() {
     pros::Controller master(pros::E_CONTROLLER_MASTER);
 
     bool flagState = false;
+    bool toggle = false;
     while (true) {
 
         // get left y and right y 3
-        int forward = -1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int heading = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
         chassis.arcade(forward, heading);
 
-        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)){
+            toggle = !toggle;
+            pros::delay(100);
+        }
 
+        if(toggle){
             IntakeMotor.move(127);
             midIntakeMotor.move(127);
+        }else {
+            IntakeMotor.move(0);
+            midIntakeMotor.move(0);
         }
-        else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
             IntakeMotor.move(-127);
             midIntakeMotor.move(-127);
-        }
-        else {
-            IntakeMotor.move(0); 
-            midIntakeMotor.move(0);
         }
 
         if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
             higherIntakeMotor.move(127);
-        }
-        else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
+        } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
             higherIntakeMotor.move(-127);
-        }
-        else {
+        } else {
             higherIntakeMotor.move(0);
         }
+        
 
         if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
             if(flagState == false) {
