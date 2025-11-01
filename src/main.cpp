@@ -17,7 +17,7 @@ pros::MotorGroup left_motor_group({-18, -17, -20}, pros::MotorGears::blue);
 pros::Motor IntakeMotor(1);
 pros::Motor higherIntakeMotor(15);
 pros::Motor midIntakeMotor(14);
-pros::adi::Pneumatics mySolenoid('A', false);
+pros::adi::Pneumatics mySolenoid('H', false);
 
 lemlib::Drivetrain drivetrain(// left motor group
                               &left_motor_group,
@@ -172,8 +172,9 @@ void intake(){
     midIntakeMotor.move(127);
 }
 
-void putMiddle(){
-    higherIntakeMotor.move(-127);
+void putBottom(){
+    IntakeMotor.move(-127);
+    midIntakeMotor.move(-127);
 }
 
 void putHigh(){
@@ -198,45 +199,47 @@ void stopAll(){
  * from where it left off.
  */
 void autonomous() {
-    // chassis.setPose(-53.9, -8.2, 0);
+    chassis.setPose(+7.592, -53.9, 0);
 
-    // chassis.turnToPoint(-24.6, -23.4, 1000, {.maxSpeed=70, .minSpeed=30});
-    // intake();
+    chassis.turnToPoint(+18, -28.6, 1000, {.maxSpeed=40, .minSpeed=30});
+    intake();
+    mySolenoid.extend();
+    chassis.moveToPoint(+18, -28.6, 1000, {.maxSpeed=40, .minSpeed=30});
+    pros::delay(2000);
+    stopAll();
     
-    // chassis.moveToPoint(-24.6, -23.4, 1000, {.maxSpeed=70, .minSpeed=30});
-    // pros::delay(400);
-    //stopAll()
-    
-    // chassis.turnToPoint(-10.0, -11.3, 1000, {.maxSpeed = 70, .minSpeed=30});
-    // chassis.moveToPoint(-10.0, -11.3, 1000, {.maxSpeed=70, .minSpeed=30});
-    // putMiddle();
+    chassis.turnToPoint(3.5, -11.5, 1000, {.maxSpeed = 70, .minSpeed=30});
+    chassis.moveToPoint(3.5, -11.5, 1000, {.maxSpeed=70, .minSpeed=30});
+    // putBottom();
     //pros::delay(400);
     //stopAll();
 
-    // chassis.turnToPoint(-45.6, -47.3, 1000, {.maxSpeed=70, .minSpeed=30});
-    // chassis.moveToPoint(-45.6, -47.3, 1000, {.maxSpeed=70, .minSpeed=30});
+    // chassis.turnToPoint(-47.3, -45.6, 1000, {.maxSpeed=70, .minSpeed=30});
+    // chassis.moveToPoint(-47.3, -45.6, 1000, {.maxSpeed=70, .minSpeed=30});
 
 
-    // chassis.turnToPoint(-61.4, -47.0, 1000, {.maxSpeed=70, .minSpeed=30});
+    // chassis.turnToPoint(-47.0, -61.4, 1000, {.maxSpeed=70, .minSpeed=30});
     //intake();
-    // chassis.moveToPoint(-61.4, -47.0, 1000, {.maxSpeed=70, .minSpeed=30});
+    // chassis.moveToPoint(-47.0, -61.4, 1000, {.maxSpeed=70, .minSpeed=30});
     //pros::delay(500);
-    //stopAll()
+    //stopAll();
 
-    // chassis.turnToPoint(-29.2, -48.3, 1000, {.maxSpeed=70, .minSpeed=30});
-    // chassis.moveToPoint(-29.2, -48.3, 1000, {.maxSpeed=70, .minSpeed=30});
+    // chassis.turnToPoint(-48.3, -29.2, 1000, {.maxSpeed=70, .minSpeed=30});
+    // chassis.moveToPoint(-48.3, -29.2, 1000, {.maxSpeed=70, .minSpeed=30});
     // putHigh();
     // pros::delay(500);
-    // stopAll()
+    // stopAll();
+
+
     
-    // chassis.dri(-24.6, -23.4, 2000, {.maxSpeed=70, .minSpeed=30})
+   
 
 
     int i = 0;
-    chassis.setPose(0,0,0);
-    chassis.turnToHeading(90, 3000, {.maxSpeed=50});
-    chassis.turnToHeading(0, 3000);
-    chassis.moveToPoint(0, 20, 5000);
+    // chassis.setPose(0,0,0);
+    // chassis.turnToHeading(90, 3000, {.maxSpeed=50});
+    // chassis.turnToHeading(0, 3000);
+    // chassis.moveToPoint(0, 20, 5000);
 
 
     pros::lcd::print(5, "heading turning: %f", chassis.getPose().theta);
