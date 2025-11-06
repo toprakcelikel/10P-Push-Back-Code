@@ -1,6 +1,8 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
+#include "lemlib/asset.hpp"
 #include "liblvgl/llemu.hpp"
 #include "pros/adi.hpp"
+#include "pros/device.hpp"
 #include "pros/llemu.hpp"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
@@ -173,8 +175,8 @@ void intake(){
 }
 
 void putBottom(){
-    IntakeMotor.move(-60);
-    midIntakeMotor.move(-60);
+    IntakeMotor.move(-127);
+    midIntakeMotor.move(-127);
 }
 
 void putHigh(){
@@ -198,37 +200,78 @@ void stopAll(){
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
+
+ASSET(sawpInspired_txt);
 void autonomous() {
-    
     chassis.setPose(7, -50, 0);
+    chassis.follow(sawpInspired_txt, /*lookahead=*/12.0, /*timeout=*/15000, /*forwards=*/true, /*async=*/true);
+    while(chassis.isInMotion()){
+        auto pose = chassis.getPose();
+        if (pose.x < -50.0 && pose.y < -45.0) {
+           mySolenoid.extend();
+           intake();
+        }
+        else if (pose.x > -40.0 && pose.y < -45.0) {
+           mySolenoid.retract();
+        }
+        else if (pose.x > -24.0 && pose.y < -45.0) {
+           putHigh();
+           pros::delay(1000);
+           intake();
+        }
+        else if (pose.x > -24.0 && pose.y < -23.0) {
+           intake();
+        }
+        else if (pose.x > -15 && pose.y > -16.0) {
+           mySolenoid.extend();
+           pros::delay(1000);
+           mySolenoid.retract();
+        }
+        else if(pose.x < -50.0 && pose.y > 45){
+            mySolenoid.extend();
+            intake();
+        }
+        else if(pose.x < -50.0 && pose.y > 45){
+            mySolenoid.extend();
+            intake();
+        }else if (pose.x > -40.0 && pose.y > 45.0) {
+           mySolenoid.retract();
+        }else if (pose.x > -24.0 && pose.y > 45.0) {
+           putHigh();
+           pros::delay(1000);
+        }
+        pros::delay(10);
+    }
 
-    chassis.turnToPoint(23.7, -21.45, 1000, {.maxSpeed=60, .minSpeed=30});
-    intake();
-    chassis.moveToPoint(23.7, -21.45, 1500, {.maxSpeed=40, .minSpeed=30});
-    pros::delay(1500);
-    
-    chassis.turnToPoint(11.33, -10, 1500, {.maxSpeed = 40, .minSpeed=30});
-    chassis.moveToPoint(11.33, -10, 1500, {.maxSpeed=40, .minSpeed=30});
-    putBottom();
-    pros::delay(4000);
-    chassis.moveToPoint(20, -18.6, 1500, {.maxSpeed=40, .minSpeed=30});
 
-    chassis.turnToPoint(50, -46.5, 1000, {.maxSpeed = 60, .minSpeed=30});
-    chassis.moveToPoint(60, -49, 1000, {.maxSpeed=60, .minSpeed=30});
-    pros::delay(400);
-    chassis.turnToPoint(53.5, -61, 1000, {.maxSpeed=70, .minSpeed=30});
-    mySolenoid.extend();
-    chassis.moveToPoint(53.5, -61, 1000, {.maxSpeed=70, .minSpeed=30});
-    intake();
-    pros::delay(2000);
-    stopAll();
 
-    chassis.moveToPoint(50, -15, 2000, {.forwards = false, .maxSpeed=50});
+    // chassis.turnToPoint(23.7, -21.45, 1000, {.maxSpeed=60, .minSpeed=30});
+    // intake();
+    // chassis.moveToPoint(23.7, -21.45, 1500, {.maxSpeed=40, .minSpeed=30});
+    // pros::delay(1500);
     
-    pros::delay(1500);
+    // chassis.turnToPoint(11.33, -10, 1500, {.maxSpeed = 40, .minSpeed=30});
+    // chassis.moveToPoint(11.33, -10, 1500, {.maxSpeed=40, .minSpeed=30});
+    // putBottom();
+    // pros::delay(4000);
+    // chassis.moveToPoint(20, -18.6, 1500, {.maxSpeed=40, .minSpeed=30});
+
+    // chassis.turnToPoint(50, -46.5, 1000, {.maxSpeed = 60, .minSpeed=30});
+    // chassis.moveToPoint(60, -49, 1000, {.maxSpeed=60, .minSpeed=30});
+    // pros::delay(400);
+    // chassis.turnToPoint(53.5, -61, 1000, {.maxSpeed=70, .minSpeed=30});
+    // mySolenoid.extend();
+    // chassis.moveToPoint(53.5, -61, 1000, {.maxSpeed=70, .minSpeed=30});
+    // intake();
+    // pros::delay(2000);
+    // stopAll();
+
+    // chassis.moveToPoint(50, -15, 2000, {.forwards = false, .maxSpeed=50});
     
-    putHigh();
-    pros::delay(1000);
+    // pros::delay(1500);
+    
+    // putHigh();
+    // pros::delay(1000);
 
     // chassis.turnToPoint(-47.0, -61.4, 1000, {.maxSpeed=70, .minSpeed=30});
     //intake();
