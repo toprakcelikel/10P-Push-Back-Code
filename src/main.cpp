@@ -268,7 +268,6 @@ void opcontrol() {
     pros::Controller master(pros::E_CONTROLLER_MASTER);
 
     bool flagState = false;
-    // bool toggle = false;
     while (true) {
 
         // get left y and right y 3
@@ -278,7 +277,7 @@ void opcontrol() {
         // move the robot
         chassis.arcade(forward, heading);
 
-        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
             IntakeMotor.move(127);
             midIntakeMotor.move(127);
         }else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
