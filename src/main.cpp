@@ -1,7 +1,8 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
-#include "lemlib/chassis/chassis.hpp"
+#include "lemlib/asset.hpp"
 #include "liblvgl/llemu.hpp"
 #include "pros/adi.hpp"
+#include "pros/device.hpp"
 #include "pros/llemu.hpp"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
@@ -20,7 +21,6 @@ pros::Motor higherIntakeMotor(15);
 pros::Motor midIntakeMotor(14);
 pros::adi::Pneumatics mySolenoid('H', false);
 pros::adi::Pneumatics retractPiston('G', false);
-pros::adi::Pneumatics wingPiston('F', false);
 
 lemlib::Drivetrain drivetrain(// left motor group
                               &left_motor_group,
@@ -175,9 +175,13 @@ void intake(){
     midIntakeMotor.move(127);
 }
 
+void bottomIntake(){
+    IntakeMotor.move(127);
+}
+
 void putBottom(){
-    IntakeMotor.move(-60);
-    midIntakeMotor.move(-60);
+    IntakeMotor.move(-127);
+    midIntakeMotor.move(-127);
 }
 
 void putHigh(){
@@ -201,58 +205,62 @@ void stopAll(){
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomousrightSide(){
-chassis.setPose(7, -50, 0);
 
-    chassis.turnToPoint(23.7, -21.45, 1000, {.maxSpeed=60, .minSpeed=30});
-    intake();
-    chassis.moveToPoint(23.7, -21.45, 1500, {.maxSpeed=40, .minSpeed=30});
-    pros::delay(1500);
-    
-    chassis.turnToPoint(11.33, -10, 1500, {.maxSpeed = 40, .minSpeed=30});
-    chassis.moveToPoint(11.33, -10, 1500, {.maxSpeed=40, .minSpeed=30});
+void autonomousrightSide(){
+    chassis.setPose(7, -50, 0);
+
+    chassis.turnToPoint(23.7, -23.45, 1000, {.maxSpeed=70, .minSpeed=30});
+    bottomIntake();
+    chassis.moveToPoint(21.7, -21.45, 1500, {.maxSpeed=40, .minSpeed=30});
+    pros::delay(500);
+
+    chassis.turnToPoint(11.33, -10.5, 1500, {.maxSpeed = 70, .minSpeed=30});
+    chassis.moveToPoint(11.33, -10.5, 1500, {.maxSpeed=70, .minSpeed=30});
+    pros::delay(1000);
     putBottom();
-    pros::delay(4000);
-    
+    pros::delay(1500);
+
     chassis.moveToPoint(50, -48, 1500, {.forwards = false,.maxSpeed=60, .minSpeed=30});
     pros::delay(400);
-    chassis.turnToHeading(180, 3000, {.maxSpeed = 70, .minSpeed = 30});
+    chassis.turnToHeading(180, 1500, {.maxSpeed = 90, .minSpeed = 30});
     pros::delay(500);
     mySolenoid.extend();
-     pros::delay(500);
-    chassis.moveToPoint(55, -60, 1500, {.maxSpeed=70, .minSpeed=30});
-     intake();
-     pros::delay(2000);
-     stopAll();
-
-    chassis.moveToPoint(56, -25, 2000, {.forwards = false, .maxSpeed=50});
-    
-    
+    pros::delay(1000);
+    chassis.moveToPoint(55, -60, 1500, {.maxSpeed=30, .minSpeed=20});
+    pros::delay(500);
+    intake();
+    pros::delay(1000);
+    chassis.moveToPoint(56, -25, 1500, {.forwards = false, .maxSpeed=70});
+    pros::delay(1500);
+    putHigh();
+    pros::delay(1500);
 }
+
 void autonomousSoloOp() {
-    
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-    
-}
 
+  chassis.setPose(15.6, -56.5, 0);
+
+    chassis.turnToPoint(47.35, -51.5, 1000, {.maxSpeed=60, .minSpeed=30});
+    chassis.moveToPoint(47.35, -51.5, 1500, {.maxSpeed=40, .minSpeed=30});
+    chassis.turnToHeading(180, 3000, {.maxSpeed = 70, .minSpeed = 30});
+    mySolenoid.extend();
+    retractPiston.retract();
+    chassis.moveToPoint(49.35, -60, 1500, {.maxSpeed=50, .minSpeed=30});
+    intake();
+
+    chassis.moveToPoint(47.35, -24, 1500, {.forwards = false,.maxSpeed=70, .minSpeed=30});
+    putHigh();
+    pros::delay(1000);
+    chassis.turnToPoint(23, -22.6, 1000, {.maxSpeed=60, .minSpeed=30});
+    intake();
+    chassis.moveToPoint(23, -22.6, 1500, {.maxSpeed=40, .minSpeed=30});
+    chassis.turnToPoint(15.5, -14.36, 1000, {.maxSpeed=60, .minSpeed=30});
+    chassis.moveToPoint(15.5, -14.36, 1500, {.maxSpeed=40, .minSpeed=30});
+    putBottom();
+}
+void autonomous(){
+    autonomousrightSide();
+}
 
 void opcontrol() {
     //autonomous();
@@ -263,8 +271,8 @@ void opcontrol() {
     while (true) {
 
         // get left y and right y 3
-        int forward = 1 * master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int heading = 0.99 * master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        int forward = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int heading = 1* master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)*0.99;
 
         // move the robot
         chassis.arcade(forward, heading);
@@ -280,7 +288,6 @@ void opcontrol() {
             midIntakeMotor.move(0);
         }
 
-        
 
         if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
             higherIntakeMotor.move(127);
