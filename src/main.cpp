@@ -203,7 +203,7 @@ void stopAll(){
 
 ASSET(sawpInspired_txt);
 void autonomous() {
-    chassis.setPose(7, -50, 0);
+    chassis.setPose(-50.077, -6.87, 0);
     chassis.follow(sawpInspired_txt, /*lookahead=*/12.0, /*timeout=*/15000, /*forwards=*/true, /*async=*/true);
     while(chassis.isInMotion()){
         auto pose = chassis.getPose();
@@ -231,12 +231,9 @@ void autonomous() {
             mySolenoid.extend();
             intake();
         }
-        else if(pose.x < -50.0 && pose.y > 45){
-            mySolenoid.extend();
-            intake();
-        }else if (pose.x > -40.0 && pose.y > 45.0) {
+        else if (pose.x > -40.0 && pose.y > 45.0) {
            mySolenoid.retract();
-        }else if (pose.x > -24.0 && pose.y > 45.0) {
+        }else if (pose.x > -26.0 && pose.y > 45.0) {
            putHigh();
            pros::delay(1000);
         }
