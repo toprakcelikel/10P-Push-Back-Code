@@ -209,31 +209,31 @@ void stopAll(){
 void autonomousrightSide(){
     chassis.setPose(7, -50, 0);
 
-    chassis.turnToPoint(23.7, -23.45, 1000, {.maxSpeed=70, .minSpeed=30});
+    chassis.turnToPoint(24.4, -19.95, 500, {.maxSpeed=70, .minSpeed=30});
     bottomIntake();
-    chassis.moveToPoint(21.7, -21.45, 1500, {.maxSpeed=40, .minSpeed=30});
+    chassis.moveToPoint(24.4, -19.95, 4000, {.maxSpeed=25, .minSpeed=20});
     pros::delay(500);
 
-    chassis.turnToPoint(11.33, -10.5, 1500, {.maxSpeed = 70, .minSpeed=30});
-    chassis.moveToPoint(11.33, -10.5, 1500, {.maxSpeed=70, .minSpeed=30});
-    pros::delay(1000);
+    chassis.turnToPoint(11.33, -10.5, 1000, {.maxSpeed = 70, .minSpeed=30});
+    chassis.moveToPoint(11.33, -10.5, 1000, {.maxSpeed=70, .minSpeed=30});
+    pros::delay(500);
     putBottom();
-    pros::delay(1500);
-
-    chassis.moveToPoint(50, -48, 1500, {.forwards = false,.maxSpeed=60, .minSpeed=30});
-    pros::delay(400);
-    chassis.turnToHeading(180, 1500, {.maxSpeed = 90, .minSpeed = 30});
-    pros::delay(500);
-    mySolenoid.extend();
     pros::delay(1000);
-    chassis.moveToPoint(55, -60, 1500, {.maxSpeed=30, .minSpeed=20});
+
+    chassis.moveToPoint(50, -48, 1000, {.forwards = false,.maxSpeed=90, .minSpeed=30});
+    pros::delay(400);
+    chassis.turnToHeading(180, 1000, {.maxSpeed = 90, .minSpeed = 30});
+    mySolenoid.extend();
+    pros::delay(500);
+    chassis.moveToPoint(55.5, -60, 1500, {.maxSpeed=30, .minSpeed=20});
     pros::delay(500);
     intake();
     pros::delay(1000);
-    chassis.moveToPoint(56, -25, 1500, {.forwards = false, .maxSpeed=70});
+    chassis.moveToPoint(57, -21, 1800, {.forwards = false, .maxSpeed=80});
     pros::delay(1500);
     putHigh();
     pros::delay(1500);
+    stopAll();
 }
 
 void autonomousSoloOp() {
