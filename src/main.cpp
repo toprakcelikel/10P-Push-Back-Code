@@ -92,9 +92,9 @@ lemlib::ExpoDriveCurve steerCurve(3, // joystick deadband out of 127
 lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         lateral_controller, // lateral PID settings
                         angular_controller, // angular PID settings
-                        sensors, // odometry sensors
-                        &throttleCurve,
-                        &steerCurve
+                        sensors // odometry sensors
+                        //&throttleCurve,
+                        //&steerCurve
 );
 
 void telemetry(){
