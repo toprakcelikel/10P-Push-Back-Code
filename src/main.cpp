@@ -13,12 +13,12 @@
 #include "main.h"  
 
 // TODO: Check motor ports and gear catridges https://www.vexrobotics.com/276-4840.html
-pros::MotorGroup right_motor_group({11, 12, 13}, pros::MotorGears::blue);
-pros::MotorGroup left_motor_group({-18, -17, -20}, pros::MotorGears::blue);
+pros::MotorGroup right_motor_group({18, 19, -20}, pros::MotorGears::blue);
+pros::MotorGroup left_motor_group({11, -12, -13}, pros::MotorGears::blue);
 
-pros::Motor IntakeMotor(1);
-pros::Motor higherIntakeMotor(15);
-pros::Motor midIntakeMotor(14);
+pros::Motor IntakeMotor(21);
+pros::Motor higherIntakeMotor(2);
+pros::Motor midIntakeMotor(10);
 pros::adi::Pneumatics mySolenoid('H', false);
 pros::adi::Pneumatics Flag('F', false);
 
@@ -32,42 +32,43 @@ lemlib::Drivetrain drivetrain(// left motor group
 );
 
 // imu
-pros::IMU imu(10);
+pros::IMU imu(-14);
 
 
 // vertical tracking wheel encoder
-pros::Rotation verticalOdom(-8);
+pros::Rotation verticalOdom(-16);
+pros::Rotation horizontalOdom(17);
 
 
 
 // vertical tracking wheel
-lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, 3.8, true);
-
+lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, 0, true);
+lemlib::TrackingWheel horizontal_tracking_wheel(&horizontalOdom, lemlib::Omniwheel::NEW_2, 5.5, true);
 // odometry settings
 lemlib::OdomSensors sensors(&vertical_tracking_wheel, // vertical tracking wheel 1, set to null
                             nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
-                            nullptr, // horizontal tracking wheel 1, set to nullptr as we dont' have a second one
+                            &horizontal_tracking_wheel, // horizontal tracking wheel 1, set to nullptr as we dont' have a second one
                             nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
                             &imu // inertial sensor
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(9, // proportional gain (kP) 9
+lemlib::ControllerSettings lateral_controller(40, // proportional gain (kP) 9
                                               0, // integral gain (kI) 0
-                                              67, // derivative gain (kD) 67
-                                              3, // anti windup
-                                              1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+                                              16, // derivative gain (kD) 67
+                                              0, // anti windup
+                                              0, // small error range, in inches
+                                              0, // small error range timeout, in milliseconds
+                                              0, // large error range, in inches
+                                              00, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
 );
 
 // angular PID controller
 lemlib::ControllerSettings angular_controller(
-    3.2,    // kP
+    16,    // kP
     0,    // kI
-    30,    // kD
+    21,    // kD
     3,    // anti windup
     1,    // small error range (degrees)
     100,  // small error timeout (ms)
@@ -225,11 +226,11 @@ void autonomousrightSide(){
     chassis.turnToHeading(180, 1000, {.maxSpeed = 90});
     pros::delay(600);
     mySolenoid.extend();
-    intake();
     pros::delay(500);
-    chassis.moveToPoint(59.4, -58.5, 1500, {.maxSpeed=70, .minSpeed=20});
+    intake();
+    chassis.moveToPoint(58.4, -63.5, 1500, {.maxSpeed=60, .minSpeed=20});
     pros::delay(1500);
-    chassis.moveToPoint(59.4, -23, 1800, {.forwards = false, .maxSpeed=80});
+    chassis.moveToPoint(56, -23, 1800, {.forwards = false, .maxSpeed=80});
     pros::delay(1500);
     putHigh();
     pros::delay(1500);
@@ -237,45 +238,84 @@ void autonomousrightSide(){
 }
 
 void autonomousSoloOp() {
-    chassis.setPose(7, -50, 0);
-    chassis.turnToPoint(54, -48, 800, {.forwards = false,.maxSpeed=80});
-    chassis.moveToPoint(54, -48, 1000, {.forwards = false,.maxSpeed=80});
+pros::delay(1000);
+  chassis.setPose(7, -50, 0);
+  chassis.turnToPoint(54, -48, 750, {.forwards = false,.maxSpeed=90});
+  chassis.moveToPoint(54, -48, 1500, {.forwards = false,.maxSpeed=90});
+    pros::delay(400);
     chassis.turnToHeading(180, 1000, {.maxSpeed = 90});
+    mySolenoid.extend();
+    pros::delay(300);
+    intake();
+    chassis.moveToPoint(58.4, -60.5, 1000, {.maxSpeed=90, .minSpeed=20});
+    pros::delay(500);
+    chassis.moveToPoint(58, -23, 1800, {.forwards = false, .maxSpeed=90});
+    pros::delay(500);
+    putHigh();
+    pros::delay(600);
+    chassis.moveToPoint(58, -48, 1500, {.maxSpeed=90});
+    stopAll();
+    mySolenoid.retract();
+pros::delay(500);
+chassis.turnToHeading(240, 1500, {.maxSpeed = 90});
+    bottomIntake();
+    pros::delay(300);
+    chassis.moveToPoint(21, -19.95, 1750, {.maxSpeed=90, .minSpeed=20});
+    pros::delay(300);
+    chassis.moveToPoint(9, -10.5, 1000, {.maxSpeed=70, .minSpeed=30});
+        putBottom();
+    chassis.moveToPoint(21, -19.95, 400, {.forwards=false,.maxSpeed=70, .minSpeed=20});
+    pros::delay(500);
+
+    pros::delay(1500);
+    chassis.turnToPoint(-44, -48, 1000, {.forwards = false,.maxSpeed=90});
+  chassis.moveToPoint(-44, -48, 2000, {.forwards = false,.maxSpeed=90});
+    pros::delay(400);
+    chassis.turnToHeading(180, 1000, {.maxSpeed = 90});
+    pros::delay(400);
     mySolenoid.extend();
     pros::delay(500);
     intake();
-    chassis.moveToPoint(59.4, -60.5, 1500, {.maxSpeed=50, .minSpeed=20});
-    pros::delay(1000);
-    chassis.moveToPoint(59.4, -23, 1500, {.forwards = false, .maxSpeed=70});
+    chassis.moveToPoint(-51.4, -60.5, 1000, {.maxSpeed=80, .minSpeed=20});
+    pros::delay(1500);
+    chassis.moveToPoint(58, -23, 1800, {.forwards = false, .maxSpeed=90});
     pros::delay(500);
     putHigh();
     pros::delay(1000);
-    chassis.moveToPoint(59.4, -48, 500, {.maxSpeed=90});
+    chassis.moveToPoint(58, -48, 1500, {.maxSpeed=90});
+    stopAll();}
+
+    void newautonomousSoloOp() {
+    chassis.setPose(-53.3, 12, 0);
+    chassis.turnToPoint(-53, -46, 750, {.forwards = false,.maxSpeed=90});
+    chassis.moveToPoint(-53, -46, 1500, {.forwards = false,.maxSpeed=90});
+    pros::delay(400);
+    chassis.turnToHeading(180, 1000, {.maxSpeed = 90});
+    mySolenoid.extend();
+    pros::delay(300);
+    intake();
+    chassis.moveToPoint(-65, 46, 1000, {.maxSpeed=90, .minSpeed=20});
+    pros::delay(500);
+    chassis.moveToPoint(-25, 46, 1800, {.forwards = false, .maxSpeed=90});
+    pros::delay(500);
+    putHigh();
+    pros::delay(600);
     stopAll();
     mySolenoid.retract();
-    pros::delay(500);
-    chassis.turnToPoint(19.4, -21.45, 1000);
-    bottomIntake();
-    pros::delay(500);
-    chassis.moveToPoint(19.4, -21.45, 3000, {.maxSpeed=25, .minSpeed=20});
-    chassis.turnToPoint(11.33, -10.5, 1000);
-    chassis.moveToPoint(11.3, -10.5, 1000, {.maxSpeed=70, .minSpeed=30});
-    pros::delay(500);
-    putBottom();
-    pros::delay(2000);
-
-    // Finish
+    }
     //left
 //      chassis.moveToPoint(8, 13, 1000, {.maxSpeed = 70, .minSpeed=30});
 //      chassis.turnToPoint(-54, -48, 1500, {.forwards = false,.maxSpeed=90});
 //   chassis.moveToPoint(-54, -48, 1500, {.forwards = false,.maxSpeed=90});
-}
+
 
 //     chassis.turnToPoint(50, -48, 1000, {.maxSpeed=60, .minSpeed=30});
 //     chassis.moveToPoint(50, -48, 1500, {.maxSpeed=40, .minSpeed=30});
 //     chassis.turnToHeading(180, 3000, {.maxSpeed = 70, .minSpeed = 30});
 //     mySolenoid.extend();
 //     retractPiston.retract();
+//      chassis.moveToPoint(55.5, -60, 1500, {.maxSpeed=30, .minSpeed=20});
+//     pros::delay(500);
 //     intake();
 //     pros::delay(1000);
 //     chassis.moveToPoint(57, -21, 1800, {.forwards = false, .maxSpeed=50});
@@ -293,10 +333,41 @@ void autonomousSoloOp() {
 //     pros::delay(500);
 //     putBottom();
 // }
-void autonomous(){
-    autonomousSoloOp();
-}
 
+
+//     chassis.turnToPoint(50, -48, 1000, {.maxSpeed=60, .minSpeed=30});
+//     chassis.moveToPoint(50, -48, 1500, {.maxSpeed=40, .minSpeed=30});
+//     chassis.turnToHeading(180, 3000, {.maxSpeed = 70, .minSpeed = 30});
+//     mySolenoid.extend();
+//     retractPiston.retract();
+//      chassis.moveToPoint(55.5, -60, 1500, {.maxSpeed=30, .minSpeed=20});
+//     pros::delay(500);
+//     intake();
+//     pros::delay(1000);
+//     chassis.moveToPoint(57, -21, 1800, {.forwards = false, .maxSpeed=50});
+//     pros::delay(1500);
+//     putHigh();
+//     pros::delay(1500);
+//     stopAll();
+//     chassis.turnToPoint(24.4, -19.95, 500, {.maxSpeed=70, .minSpeed=30});
+//     bottomIntake();
+//     chassis.moveToPoint(24.4, -19.95, 4000, {.maxSpeed=25, .minSpeed=20});
+//     pros::delay(500);
+
+//     chassis.turnToPoint(11.33, -10.5, 1000, {.maxSpeed = 70, .minSpeed=30});
+//     chassis.moveToPoint(11.33, -10.5, 1000, {.maxSpeed=70, .minSpeed=30});
+//     pros::delay(500);
+//     putBottom();
+// }
+
+
+void autonomous(){
+    
+    chassis.setPose(0, 0, 0, 0);
+    chassis.turnToHeading(90, 2000, {.maxSpeed=80});
+    // chassis.moveToPoint(0,25,2000, {.maxSpeed=60});
+    
+}
 
 void opcontrol() {
     //autonomous();
@@ -316,10 +387,10 @@ void opcontrol() {
 
         if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
             IntakeMotor.move(127);
-            midIntakeMotor.move(127);
+            midIntakeMotor.move(-127);
         }else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
             IntakeMotor.move(-127);
-            midIntakeMotor.move(-127);
+            midIntakeMotor.move(127);
         }else {
             IntakeMotor.move(0);
             midIntakeMotor.move(0);
