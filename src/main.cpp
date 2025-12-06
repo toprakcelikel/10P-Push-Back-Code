@@ -38,8 +38,11 @@ pros::Rotation verticalOdom(-16);
 pros::Rotation horizontalOdom(17);
 
 // vertical tracking wheel
-lemlib::TrackingWheel
-    vertical_tracking_wheel(&verticalOdom, lemlib::Omniwheel::NEW_2, 0.5, true);
+lemlib::TrackingWheel vertical_tracking_wheel(&verticalOdom,
+                                              lemlib::Omniwheel::NEW_2,
+                                              0.5, 
+                                              true);
+
 lemlib::TrackingWheel horizontal_tracking_wheel(&horizontalOdom,
                                                 lemlib::Omniwheel::NEW_2, 5.75,
                                                 true);
@@ -48,24 +51,21 @@ lemlib::OdomSensors sensors(
     &vertical_tracking_wheel, // vertical tracking wheel 1, set to null
     nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
     &horizontal_tracking_wheel, // horizontal tracking wheel 1, set to nullptr
-                                // as we dont' have a second one
     nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a
-             // second one
     &imu     // inertial sensor
 );
 
 // lateral PID controller
-lemlib::ControllerSettings
-    lateral_controller(40, // proportional gain (kP) 9
-                       0,  // integral gain (kI) 0
-                       16, // derivative gain (kD) 67
-                       0,  // anti windup
-                       0,  // small error range, in inches
-                       0,  // small error range timeout, in milliseconds
-                       0,  // large error range, in inches
-                       00, // large error range timeout, in milliseconds
-                       0   // maximum acceleration (slew)
-    );
+lemlib::ControllerSettings lateral_controller(40, // proportional gain (kP) 9
+                                              0,  // integral gain (kI) 0
+                                              16, // derivative gain (kD) 67
+                                     0,  // anti windup
+                                      0,  // small error range, in inches
+                               0,  // small error range timeout, in milliseconds
+                                      0,  // large error range, in inches
+                               0, // large error range timeout, in milliseconds
+                                            0   // maximum acceleration (slew)
+);
 
 // angular PID controller
 lemlib::ControllerSettings angular_controller(16, // kP
@@ -79,26 +79,11 @@ lemlib::ControllerSettings angular_controller(16, // kP
                                               0    // max acceleration (slew)
 );
 
-lemlib::ExpoDriveCurve
-    throttleCurve(3,   // joystick deadband out of 127
-                  10,  // minimum output where drivetrain will move out of 127
-                  1.25 // expo curve gain
-    );
-
-// input curve for steer input during driver control
-lemlib::ExpoDriveCurve
-    steerCurve(3,   // joystick deadband out of 127
-               10,  // minimum output where drivetrain will move out of 127
-               1.25 // expo curve gain
-    );
-
 // create the chassis
 lemlib::Chassis chassis(drivetrain,         // drivetrain settings
                         lateral_controller, // lateral PID settings
-                        angular_controller, // angular PID settings
-                        sensors             // odometry sensors
-                                            //&throttleCurve,
-                                            //&steerCurve
+                       angular_controller, // angular PID settings
+                                        sensors             // odometry sensors
 );
 
 void telemetry() {
@@ -319,12 +304,11 @@ void opcontrol() {
   while (true) {
 
     // get left y and right y 3
-    int forward = 1 * master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-    int heading =
-        1 * master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) * 0.99;
+    float forward = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+    float heading = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) * 0.99;
 
     // move the robot
-    chassis.arcade(forward, heading);
+    chassis.arcade((int) forward, (int) heading);
 
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
       IntakeMotor.move(127);
